@@ -13,7 +13,7 @@
             height: 100%; 
             background-color: #0c0c0c; 
             overflow: hidden; 
-            touch-action: none; /* Mobilde istenmeyen kaydırmaları engeller */
+            touch-action: none;
         }
 
         /* Canvas'ı ekranın tamamına yayar */
@@ -35,16 +35,16 @@
             border-radius: 8px;
             border: 1px solid #444;
             color: #fff;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: sans-serif;
             font-size: 13px;
-            pointer-events: none; /* Fare tıklamalarını canvas'a iletir */
+            pointer-events: none;
             z-index: 10;
         }
 
         .status-dot {
             height: 8px;
             width: 8px;
-            background-color: #ff4444; /* Başlangıçta kırmızı (yükleniyor) */
+            background-color: #ff4444; /* Başlangıçta kırmızı */
             border-radius: 50%;
             display: inline-block;
             margin-right: 5px;
@@ -55,7 +55,7 @@
 
     <div id="ui-overlay">
         <span id="dot" class="status-dot"></span>
-        <span id="status-text">Motor Yükleniyor...</span>
+        <span id="status-text">Motor Yükleniyor... (index.js bekleniyor)</span>
     </div>
     
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
@@ -64,7 +64,6 @@
       var Module = {
         canvas: (function() {
           var canvas = document.getElementById('canvas');
-          // Sağ tık menüsünü Roblox Studio gibi kamerayı döndürmek için engeller
           canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); }, false);
           return canvas;
         })(),
@@ -77,14 +76,13 @@
         },
 
         printErr: function(text) {
-            console.error("Motor Hatası: " + text);
+            console.error("Hata: " + text);
+            document.getElementById('status-text').innerText = "Hata: Dosya Bulunamadı!";
         }
       };
 
-      // Ekran boyutu değiştiğinde (pencere küçültme veya telefon döndürme)
       window.addEventListener('resize', function() {
           if (Module.setCanvasSize) {
-              // C++ tarafına yeni boyutları gönderir
               Module.setCanvasSize(window.innerWidth, window.innerHeight);
           }
       });
