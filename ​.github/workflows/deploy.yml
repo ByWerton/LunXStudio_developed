@@ -1,35 +1,44 @@
-name: C++ Derleyici ve Deploy
-
+name: LunX Ultra Build
 on:
   push:
-    branches: [ main ]
+    branches: [ "ana" ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Kodu Çek
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Emscripten Hazır Aksiyonu Kullan
-        uses: mymindstorm/setup-emsdk@v11
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
         with:
           version: 'latest'
 
-      - name: C++'ı WebAssembly'ye Çevir
+      - name: Compile Universal C++
         run: |
-          # Çıktı adını kesin olarak 'index.js' yapıyoruz
-          emcc main.cpp -o index.js -s WASM=1 -s USE_SDL=2 -s ASYNCIFY
+          emcc ana.cpp -o index.js \
+          -O3 \
+          -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 \
+          -s WASM=1 \
+          -s FULL_ES2=1 \
+          -s ALLOW_MEMORY_GROWTH=1 \
+          -s NO_EXIT_RUNTIME=1 \
+          -s FORCE_FILESYSTEM=1 \
+          --shell-file index.html
 
-      - name: Yayın Klasörünü Hazırla
-        run: |
-          mkdir public
-          cp index.html index.js index.wasm public/
-          # Eğer resimlerin/texture'ların varsa onları da kopyala:
-          # cp -r assets public/ || true 
-
-      - name: GitHub Pages'a Yükle
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public  # Sadece gerekli dosyaları gönder
+          path: .
+
+  deploy:
+    needs: build-and-deploy
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
