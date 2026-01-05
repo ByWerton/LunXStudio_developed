@@ -2,24 +2,94 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>C++ WebAssembly Oyunum</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LunX Studio | Web Engine</title>
     <style>
-        body { background-color: #222; color: white; text-align: center; }
-        canvas { border: 2px solid #555; background-color: black; }
+        /* Ekranın her yerini kapla ve kaydırmayı engelle */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            background-color: #0c0c0c; 
+            overflow: hidden; 
+            touch-action: none; /* Mobilde istenmeyen kaydırmaları engeller */
+        }
+
+        /* Canvas'ı ekranın tamamına yayar */
+        #canvas { 
+            display: block; 
+            width: 100vw; 
+            height: 100vh; 
+            background-color: #000;
+            outline: none;
+        }
+
+        /* Sol üstteki bilgi paneli */
+        #ui-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(30, 30, 30, 0.8);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            pointer-events: none; /* Fare tıklamalarını canvas'a iletir */
+            z-index: 10;
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #ff4444; /* Başlangıçta kırmızı (yükleniyor) */
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>C++ WebAssembly Çıktısı</h1>
-    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+    <div id="ui-overlay">
+        <span id="dot" class="status-dot"></span>
+        <span id="status-text">Motor Yükleniyor...</span>
+    </div>
+    
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
     
     <script type='text/javascript'>
       var Module = {
         canvas: (function() {
-          return document.getElementById('canvas');
-        })()
+          var canvas = document.getElementById('canvas');
+          // Sağ tık menüsünü Roblox Studio gibi kamerayı döndürmek için engeller
+          canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); }, false);
+          return canvas;
+        })(),
+        
+        onRuntimeInitialized: function() {
+            // Wasm dosyası başarıyla yüklendiğinde çalışır
+            document.getElementById('dot').style.backgroundColor = "#00ff00"; // Yeşile döner
+            document.getElementById('status-text').innerText = "LunX Studio | Aktif";
+            console.log("WebAssembly Modülü Başlatıldı.");
+        },
+
+        printErr: function(text) {
+            console.error("Motor Hatası: " + text);
+        }
       };
+
+      // Ekran boyutu değiştiğinde (pencere küçültme veya telefon döndürme)
+      window.addEventListener('resize', function() {
+          if (Module.setCanvasSize) {
+              // C++ tarafına yeni boyutları gönderir
+              Module.setCanvasSize(window.innerWidth, window.innerHeight);
+          }
+      });
     </script>
+    
     <script async src="index.js"></script>
 </body>
 </html>
-
