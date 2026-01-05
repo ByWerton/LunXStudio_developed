@@ -2,7 +2,7 @@ name: C++ Derleyici ve Deploy
 
 on:
   push:
-    branches: [ main ] # Kodunu 'main' branch'ine attığında çalışır
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,22 +11,25 @@ jobs:
       - name: Kodu Çek
         uses: actions/checkout@v3
 
-      - name: Emscripten Kur (Derleyici)
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install latest
-          ./emsdk activate latest
+      - name: Emscripten Hazır Aksiyonu Kullan
+        uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: 'latest'
 
       - name: C++'ı WebAssembly'ye Çevir
         run: |
-          source emsdk/emsdk_env.sh
-          # SDL2 kütüphanesini kullanarak derle
-          emcc main.cpp -o index.js -s USE_SDL=2 -s WASM=1
+          # Çıktı adını kesin olarak 'index.js' yapıyoruz
+          emcc main.cpp -o index.js -s WASM=1 -s USE_SDL=2 -s ASYNCIFY
+
+      - name: Yayın Klasörünü Hazırla
+        run: |
+          mkdir public
+          cp index.html index.js index.wasm public/
+          # Eğer resimlerin/texture'ların varsa onları da kopyala:
+          # cp -r assets public/ || true 
 
       - name: GitHub Pages'a Yükle
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: . # Tüm dosyaları yayınla
-
+          publish_dir: ./public  # Sadece gerekli dosyaları gönder
