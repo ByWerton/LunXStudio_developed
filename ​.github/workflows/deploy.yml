@@ -1,1 +1,32 @@
+name: C++ Derleyici ve Deploy
+
+on:
+  push:
+    branches: [ main ] # Kodunu 'main' branch'ine attığında çalışır
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu Çek
+        uses: actions/checkout@v3
+
+      - name: Emscripten Kur (Derleyici)
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      - name: C++'ı WebAssembly'ye Çevir
+        run: |
+          source emsdk/emsdk_env.sh
+          # SDL2 kütüphanesini kullanarak derle
+          emcc main.cpp -o index.js -s USE_SDL=2 -s WASM=1
+
+      - name: GitHub Pages'a Yükle
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: . # Tüm dosyaları yayınla
 
