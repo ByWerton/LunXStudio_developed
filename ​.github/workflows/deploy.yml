@@ -1,44 +1,35 @@
-name: LunX Ultra Build
+name: LunX Ultra Deploy
 on:
   push:
-    branches: [ "ana" ]
+    branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: 'latest'
 
-      - name: Compile Universal C++
+      - name: Compile C++ to Engine
         run: |
-          emcc ana.cpp -o index.js \
+          emcc main.cpp -o index.html \
           -O3 \
-          -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 \
+          -s USE_SDL=2 \
           -s WASM=1 \
-          -s FULL_ES2=1 \
           -s ALLOW_MEMORY_GROWTH=1 \
-          -s NO_EXIT_RUNTIME=1 \
-          -s FORCE_FILESYSTEM=1 \
           --shell-file index.html
 
-      - name: Upload Pages Artifact
+      - name: Deploy to Pages
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
   deploy:
-    needs: build-and-deploy
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
+    needs: build
+    permissions: { pages: write, id-token: write }
     runs-on: ubuntu-latest
+    environment: { name: github-pages }
     steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
