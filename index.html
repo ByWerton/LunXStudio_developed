@@ -5,49 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LunX Studio | Web Engine</title>
     <style>
-        /* Ekranın her yerini kapla ve kaydırmayı engelle */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body, html { 
-            width: 100%; 
-            height: 100%; 
-            background-color: #0c0c0c; 
-            overflow: hidden; 
-            touch-action: none; /* Mobilde sayfa kaymasını engeller */
+            width: 100%; height: 100%; 
+            background-color: #0c0c0c; overflow: hidden; 
+            touch-action: none; 
         }
-
-        /* Canvas'ı ekranın tamamına yayar */
         #canvas { 
-            display: block; 
-            width: 100vw; 
-            height: 100vh; 
-            background-color: #000;
-            outline: none;
+            display: block; width: 100vw; height: 100vh; 
+            background-color: #000; outline: none;
+            image-rendering: pixelated; /* Düşük çözünürlüklü oyunlarda netlik sağlar */
         }
-
-        /* Sol üstteki durum paneli */
         #ui-overlay {
-            position: absolute;
-            top: 15px;
-            left: 15px;
+            position: absolute; top: 15px; left: 15px;
             background: rgba(30, 30, 30, 0.9);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            color: #fff;
-            font-family: sans-serif;
-            font-size: 13px;
-            pointer-events: none;
-            z-index: 10;
+            padding: 10px 15px; border-radius: 8px;
+            border: 1px solid #444; color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px; pointer-events: none; z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-
         .status-dot {
-            height: 8px;
-            width: 8px;
-            background-color: #ff4444; /* Başlangıçta kırmızı */
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+            height: 8px; width: 8px;
+            background-color: #ff4444; border-radius: 50%;
+            display: inline-block; margin-right: 8px;
+            transition: background-color 0.5s;
         }
     </style>
 </head>
@@ -55,40 +37,46 @@
 
     <div id="ui-overlay">
         <span id="dot" class="status-dot"></span>
-        <span id="status-text">Motor Yükleniyor...</span>
+        <span id="status-text">Motor Hazırlanıyor...</span>
     </div>
     
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
     
     <script type='text/javascript'>
       var Module = {
+        preRun: [],
+        postRun: [],
+        // C++ tarafındaki std::cout çıktılarını yakalar
+        print: (function() {
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log("C++ Output: " + text);
+          };
+        })(),
         canvas: (function() {
           var canvas = document.getElementById('canvas');
-          // Sağ tık menüsünü engeller
-          canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); }, false);
           return canvas;
         })(),
-        
-        onRuntimeInitialized: function() {
-            // Wasm dosyası başarıyla yüklendiğinde çalışır
-            document.getElementById('dot').style.backgroundColor = "#00ff00"; // Yeşile döner
-            document.getElementById('status-text').innerText = "LunX Studio | Aktif";
-            console.log("WebAssembly Modülü Başlatıldı.");
+        setStatus: function(text) {
+            if (!text) { // Yükleme bittiğinde
+                document.getElementById('dot').style.backgroundColor = "#00ff00";
+                document.getElementById('status-text').innerText = "LunX Studio | Aktif";
+            } else {
+                document.getElementById('status-text').innerText = text;
+            }
         },
-
-        printErr: function(text) {
-            console.error("Hata: " + text);
+        monitorRunDependencies: function(left) {
+          this.setStatus(left ? "Veriler Yükleniyor... (" + left + ")" : "");
         }
       };
 
-      // Pencere boyutu değiştiğinde canvas'ı günceller
       window.addEventListener('resize', function() {
-          if (Module.setCanvasSize) {
-              Module.setCanvasSize(window.innerWidth, window.innerHeight);
-          }
+          // Canvas boyutunu cihaz ekranına göre gerçek zamanlı ayarlar
+          Module.canvas.width = window.innerWidth;
+          Module.canvas.height = window.innerHeight;
       });
     </script>
     
-    <script async src="index.js"></script>
+    {{{ SCRIPT }}}
 </body>
 </html>
